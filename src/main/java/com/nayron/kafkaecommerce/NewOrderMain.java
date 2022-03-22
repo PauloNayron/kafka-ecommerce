@@ -1,5 +1,6 @@
 package com.nayron.kafkaecommerce;
 
+import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -13,14 +14,18 @@ public class NewOrderMain {
         var producer = new KafkaProducer<String, String>(properties());
         String value = "1234,56767,23141";
         var record = new ProducerRecord<>("ECOMMERCE_NEW_ORDER", value, value);
-        producer.send(record, (data, ex) -> {
+        Callback callback = (data, ex) -> {
             if (ex != null) { // callback para visualizar resposta ou erro
                 ex.printStackTrace();
                 return;
             }
             System.out.println("sucesso");
             System.out.println(data.topic() + ":::" + data.partition() + "/" + data.offset() + "/" + data.timestamp());
-        }).get();
+        };
+        String email = "Thank you for your order! We are processing your order";
+        var emailRecord = new ProducerRecord<>("ECOMMERCE_SEND_EMAIL", email, email);
+        producer.send(record, callback).get();
+        producer.send(emailRecord, callback).get();
     }
 
     private static Properties properties() {
