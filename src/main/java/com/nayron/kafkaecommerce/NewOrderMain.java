@@ -1,35 +1,25 @@
 package com.nayron.kafkaecommerce;
 
-import org.apache.kafka.clients.producer.Callback;
-import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 
+import java.io.IOException;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 public class NewOrderMain {
-    public static void main(String[] args) throws ExecutionException, InterruptedException {
-        var producer = new KafkaProducer<String, String>(properties());
+    public static void main(String[] args) throws ExecutionException, InterruptedException, IOException {
+        try(var dispatcher = new KafkaDispatcher()) {
+            for (var i = 0; i < 1; i++) {
+                var key = UUID.randomUUID().toString();
 
-        for (var i = 0; i < 10; i++) {
-            var key = UUID.randomUUID().toString();
-            var value = "1234,56767,23141";
-            var record = new ProducerRecord<>("ECOMMERCE_NEW_ORDER", key, value);
-            Callback callback = (data, ex) -> {
-                if (ex != null) { // callback para visualizar resposta ou erro
-                    ex.printStackTrace();
-                    return;
-                }
-                System.out.println("sucesso");
-                System.out.println(data.topic() + ":::" + data.partition() + "/" + data.offset() + "/" + data.timestamp());
-            };
-            String email = "Thank you for your order! We are processing your order";
-            var emailRecord = new ProducerRecord<>("ECOMMERCE_SEND_EMAIL", email, email);
-            producer.send(record, callback).get();
-            producer.send(emailRecord, callback).get();
+                var value = "1234,56767,23141";
+                dispatcher.send("ECOMMERCE_NEW_ORDER", key, value);
+
+                String email = "Thank you for your order! We are processing your order";
+                dispatcher.send("ECOMMERCE_SEND_EMAIL", key, email);
+            }
         }
     }
 
