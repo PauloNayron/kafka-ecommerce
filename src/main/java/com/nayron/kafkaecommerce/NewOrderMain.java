@@ -7,25 +7,30 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 
 import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 public class NewOrderMain {
     public static void main(String[] args) throws ExecutionException, InterruptedException {
         var producer = new KafkaProducer<String, String>(properties());
-        String value = "1234,56767,23141";
-        var record = new ProducerRecord<>("ECOMMERCE_NEW_ORDER", value, value);
-        Callback callback = (data, ex) -> {
-            if (ex != null) { // callback para visualizar resposta ou erro
-                ex.printStackTrace();
-                return;
-            }
-            System.out.println("sucesso");
-            System.out.println(data.topic() + ":::" + data.partition() + "/" + data.offset() + "/" + data.timestamp());
-        };
-        String email = "Thank you for your order! We are processing your order";
-        var emailRecord = new ProducerRecord<>("ECOMMERCE_SEND_EMAIL", email, email);
-        producer.send(record, callback).get();
-        producer.send(emailRecord, callback).get();
+
+        for (var i = 0; i < 10; i++) {
+            var key = UUID.randomUUID().toString();
+            var value = "1234,56767,23141";
+            var record = new ProducerRecord<>("ECOMMERCE_NEW_ORDER", key, value);
+            Callback callback = (data, ex) -> {
+                if (ex != null) { // callback para visualizar resposta ou erro
+                    ex.printStackTrace();
+                    return;
+                }
+                System.out.println("sucesso");
+                System.out.println(data.topic() + ":::" + data.partition() + "/" + data.offset() + "/" + data.timestamp());
+            };
+            String email = "Thank you for your order! We are processing your order";
+            var emailRecord = new ProducerRecord<>("ECOMMERCE_SEND_EMAIL", email, email);
+            producer.send(record, callback).get();
+            producer.send(emailRecord, callback).get();
+        }
     }
 
     private static Properties properties() {
