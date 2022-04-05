@@ -4,21 +4,27 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 public class NewOrderMain {
     public static void main(String[] args) throws ExecutionException, InterruptedException, IOException {
-        try(var dispatcher = new KafkaDispatcher()) {
-            for (var i = 0; i < 1; i++) {
-                var key = UUID.randomUUID().toString();
+        try (var orderKafkaDispatcher = new KafkaDispatcher<Order>()) {
+            try (var emailDispatcher = new KafkaDispatcher<String>()) {
 
-                var value = "1234,56767,23141";
-                dispatcher.send("ECOMMERCE_NEW_ORDER", key, value);
+                for (var i = 0; i < 1; i++) {
+                    var userId = UUID.randomUUID().toString();
+                    var orderId = UUID.randomUUID().toString();
+                    var amount = new BigDecimal(Math.random() * 5000 + 1);
 
-                String email = "Thank you for your order! We are processing your order";
-                dispatcher.send("ECOMMERCE_SEND_EMAIL", key, email);
+                    var order = new Order(userId, orderId, amount);
+                    orderKafkaDispatcher.send("ECOMMERCE_NEW_ORDER", userId, order);
+
+                    String email = "Thank you for your order! We are processing your order";
+                    emailDispatcher.send("ECOMMERCE_SEND_EMAIL", userId, email);
+                }
             }
         }
     }
