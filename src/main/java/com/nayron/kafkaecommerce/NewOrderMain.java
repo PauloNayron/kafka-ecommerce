@@ -12,7 +12,7 @@ import java.util.concurrent.ExecutionException;
 public class NewOrderMain {
     public static void main(String[] args) throws ExecutionException, InterruptedException, IOException {
         try (var orderKafkaDispatcher = new KafkaDispatcher<Order>()) {
-            try (var emailDispatcher = new KafkaDispatcher<String>()) {
+            try (var emailDispatcher = new KafkaDispatcher<Email>()) {
 
                 for (var i = 0; i < 1; i++) {
                     var userId = UUID.randomUUID().toString();
@@ -22,7 +22,7 @@ public class NewOrderMain {
                     var order = new Order(userId, orderId, amount);
                     orderKafkaDispatcher.send("ECOMMERCE_NEW_ORDER", userId, order);
 
-                    String email = "Thank you for your order! We are processing your order";
+                    var email = new Email("nayron", "Thank you for your order! We are processing your order");
                     emailDispatcher.send("ECOMMERCE_SEND_EMAIL", userId, email);
                 }
             }
